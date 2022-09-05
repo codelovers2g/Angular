@@ -1,0 +1,203 @@
+<!-- page title -->
+<app-page-title [breadcrumbItems]="pageTitle" title=" Support Tickets" *ngIf="isAllowed && userType.EndUser!=currentUserType"></app-page-title>
+
+
+<div class="row" *ngIf="isAllowed && userType.EndUser!=currentUserType">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+
+                <div class="table-responsive">
+                    <table #ticket datatable [dtOptions]="dtOptions" [dtTrigger]="dtTrigger" class="table advanced-table table-striped w-100 nowrap">
+                        <thead>
+                            <tr>
+                                <th scope="col">Ticket No.</th>
+                                <th scope="col">Assigned To</th>
+                                <th scope="col">Priority</th>
+                                <th scope="col">Date</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Subscriber Id</th>
+                                <th scope="col">Client</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody style="position: relative;">
+                            <tr *ngFor="let dt of ticketModel" class="all">
+                                <td><span class="all-extra">{{ dt.id }}</span></td>
+                                <td><span class="all-extra">{{ dt.assignedToUser?.fullName || 'Unassigned' }}</span></td>
+                                <td>
+                                    <span *ngIf="dt.ticketPriority.ticketPriorityEnumId===ticketPriority.Low" class="badge bg-secondary me-1">
+                                        {{ dt.ticketPriority.priority }}
+                                    </span>
+                                    <span *ngIf="dt.ticketPriority.ticketPriorityEnumId===ticketPriority.Moderate" class="badge bg-warning me-1">
+                                        {{ dt.ticketPriority.priority }}
+                                    </span>
+                                    <span *ngIf="dt.ticketPriority.ticketPriorityEnumId===ticketPriority.High" class="badge bg-danger me-1">
+                                        {{ dt.ticketPriority.priority }}
+                                    </span>
+
+                                </td>
+                                <td><span class="all-extra">{{ dt.raiseDate | customDate }}</span></td>
+                                <td>
+                                    <span *ngIf="dt.ticketStatus.ticketStatusEnumId===ticketStatus.Open" class="badge bg-success me-1">
+                                        {{ dt.ticketStatus.status }}
+                                    </span>
+                                    <span *ngIf="dt.ticketStatus.ticketStatusEnumId===ticketStatus.Closed" class="badge bg-danger me-1">
+                                        {{ dt.ticketStatus.status }}
+                                    </span>
+
+                                </td>
+                                <td><span class="">{{ dt.raisedByUser.id }}</span></td>
+                                <td><span class="all-extra">{{ dt.raisedByUser.fullName }}</span></td>
+
+                                <td>
+                                    <a href="javascript:void(0);" class="action-icon my-button">
+                                        <i class="mdi mdi-square-edit-outline"
+                                           id={{dt.id}} (click)="openEditTicketModal($event)"></i>
+                                    </a>
+                                    <a routerLink="/ticket-chat/{{dt.id}}" class="action-icon"> <i class="mdi mdi-message-processing"></i></a>
+                                </td>
+
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- end card body-->
+        </div>
+        <!-- end card -->
+    </div>
+    <!-- end col-->
+</div>
+
+
+<ng-template #editTicketModal let-modal>
+    <div class="modal-header">
+
+        <h4 class="modal-title">Edit Ticket</h4>
+        <button type="button"
+                class="btn-close"
+                aria-label="Close"
+                (click)="modal.dismiss('Cross click')"></button>
+    </div>
+    <form [formGroup]="ticketForm" autocomplete="off" novalidate #validate="ngForm" (ngSubmit)="onSubmit(ticketForm.value);
+          disableAssignSpinner = ticketForm.valid ? true : false; disableAssignButton = ticketForm.valid ? true : false;">
+        <div class="modal-body">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="mb-3">
+                        <label for="TicketName" class="form-label">Ticket Id</label>
+                        <input type="text" id="ticketId" class="form-control" disabled value="{{ticketId}}">
+
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="assignUser" class="form-label">Assign To</label>
+                        <select id="assignUser" formControlName="assignUserFormControl" class="form-select">
+                            <option [ngValue]="null">Select User</option>
+
+                            <option *ngFor="let staff of allStaff" [value]="staff.id">
+                                {{ staff.fullName }}
+                            </option>
+
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="ticketPriority" class="form-label">Prority</label>
+                        <select id="ticketPriority" formControlName="ticketPriorityFormControl" required class="form-select" [ngClass]="{ 'is-valid': validate.submitted && ticketform.ticketPriorityFormControl.valid , 'is-invalid': validate.submitted && ticketform.ticketPriorityFormControl.invalid }">
+                            <option [ngValue]="null">Select Priority</option>
+                            <option *ngFor="let priority of ticketPriorityTypes" [value]="priority">
+                                {{ ticketPriority[priority] }}
+                            </option>
+
+                        </select>
+                        <div *ngIf="validate.submitted &&  ticketform.ticketPriorityFormControl.invalid" class="invalid-feedback">
+                            Please select priority.
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ticketStatus" class="form-label">Status</label>
+                        <select id="ticketStatus" formControlName="ticketStatusFormControl" required class="form-select" [ngClass]="{ 'is-valid': validate.submitted && ticketform.ticketStatusFormControl.valid , 'is-invalid': validate.submitted && ticketform.ticketStatusFormControl.invalid }">
+
+                            <option [ngValue]="null" disabled="disabled">Select Status</option>
+                            <option *ngFor="let status of ticketStatusTypes" [value]="status">
+                                {{ ticketStatus[status] }}
+                            </option>
+                        </select>
+                        <div *ngIf="validate.submitted && ticketform.ticketStatusFormControl.invalid" class="invalid-feedback">
+                            Please select status.
+                        </div>
+                    </div>
+
+                    <br />
+
+                </div>
+            </div>
+
+        </div>
+        <div class="modal-footer">
+            <button type="button"
+                    class="btn btn-light"
+                    (click)="modal.close('Close click')">
+                Close
+            </button>
+            <button type="submit" [disabled]='disableAssignButton'
+                    class="btn btn-primary">
+                <span class="spinner-border spinner-border-sm me-1" *ngIf="disableAssignSpinner"
+                      aria-hidden="true"></span>
+                Save
+            </button>
+
+        </div>
+    </form>
+</ng-template>
+<app-page-title [breadcrumbItems]="pageTitle" title="My Tickets" *ngIf="isAllowed && userType.Yopla!=currentUserType"></app-page-title>
+
+<div class="row" *ngIf="isAllowed && userType.Yopla!=currentUserType">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+
+                <div class="table-responsive">
+                    <table #myTickets datatable [dtOptions]="dtOptionsMyTickets" [dtTrigger]="dtTriggerMyTickets" class="table advanced-table table-striped w-100 nowrap">
+                        <thead>
+                            <tr>
+                                <th scope="col">Ticket No.</th>
+                                <th scope="col"> Date</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Subscriber Id</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody style="position: relative;">
+                            <tr *ngFor="let dt of myTicketmodel" class="all">
+                                <td>{{ dt.id }}</td>
+                                <td>{{ dt.raiseDate | customDate }}</td>
+                                <td>
+                                    <span *ngIf="dt.ticketStatus.ticketStatusEnumId===ticketStatus.Open" class="badge bg-success me-1">
+                                        {{ dt.ticketStatus.status }}
+                                    </span>
+                                    <span *ngIf="dt.ticketStatus.ticketStatusEnumId===ticketStatus.Closed" class="badge bg-danger me-1">
+                                        {{ dt.ticketStatus.status }}
+                                    </span>
+                                </td>
+                                <td></td>
+                                <td>
+                                    <a routerLink="/ticket-chat/{{dt.id}}" class="action-icon"> <i class="mdi mdi-message-processing"></i></a>
+                                </td>
+
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+            <!-- end card body-->
+        </div>
+        <!-- end card -->
+    </div>
+    <!-- end col-->
+</div>
+
+<h6 class="text-center" *ngIf="!isAllowed">No Content Found</h6>
