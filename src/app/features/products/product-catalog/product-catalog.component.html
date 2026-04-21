@@ -1,0 +1,112 @@
+<div class="catalog-container">
+  <header class="glass-header">
+    <div class="header-content">
+      <h1>FutureTech <span class="accent">Catalog</span></h1>
+      
+      <div class="controls">
+        <div class="search-group">
+          <input 
+            type="text" 
+            [ngModel]="searchQuery()" 
+            (ngModelChange)="searchQuery.set($event)" 
+            placeholder="Search gadgets..."
+            class="search-input"
+            id="productSearch"
+          />
+        </div>
+
+        <div class="filter-group">
+          <select [ngModel]="categoryFilter()" (ngModelChange)="categoryFilter.set($event)" class="category-select" id="categoryFilter">
+            <option value="All">All Categories</option>
+            <option value="Gear">Gear</option>
+            <option value="IO">Peripherals</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="cart-pill">
+        <i class="shopping-icon"></i>
+        <span>{{ cartCount() }} items | {{ total() | currency }}</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="content-wrapper">
+    <!-- Handling Resource States -->
+    @if (productsResource.isLoading()) {
+      <div class="skeleton-grid">
+        @for (i of [1,2,3,4,5,6]; track i) {
+          <div class="skeleton-card"></div>
+        }
+      </div>
+    } @else if (productsResource.error()) {
+      <div class="error-state">
+        <p>Unable to load products. please try again later.</p>
+        <button (click)="productsResource.reload()">Retry Connection</button>
+      </div>
+    } @else {
+      <div class="product-grid" [@listAnimation]="filteredProducts().length">
+        @for (product of filteredProducts(); track product.id) {
+          <section 
+            class="product-card" 
+            [class.selected]="selectedId() === product.id" 
+            (click)="selectedId.set(product.id)"
+          >
+            <div class="badge" [class.out]="!product.inStock">
+              {{ product.inStock ? 'Available' : 'Sold Out' }}
+            </div>
+            <h3>{{ product.name }}</h3>
+            <p>{{ product.description }}</p>
+            <div class="card-footer">
+              <span class="price">{{ product.price | currency }}</span>
+              <button 
+                class="btn-add" 
+                (click)="addToCart(product); $event.stopPropagation()"
+                [disabled]="!product.inStock"
+              >
+                Add to Cart
+              </button>
+            </div>
+          </section>
+        } @empty {
+          <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <p>No matches found for "{{ searchQuery() }}"</p>
+            <button class="btn-reset" (click)="resetFilters()">Clear All Filters</button>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Defer Loading -->
+    @if (selectedProduct(); as selected) {
+      @defer (on timer(100ms); prefetch on idle) {
+        <aside class="detail-panel">
+          <header class="panel-header">
+            <h2>Product Details</h2>
+            <span class="category-tag">{{ selected.category }}</span>
+          </header>
+          
+          <div class="panel-body">
+            <h3>{{ selected.name }}</h3>
+            <p class="description">{{ selected.description }}</p>
+            <div class="specs">
+              <div class="spec-item"><span>Status</span> <strong>{{ selected.inStock ? 'In Stock' : 'Out of Stock' }}</strong></div>
+              <div class="spec-item"><span>SKU</span> <strong>FT-{{ selected.id }}</strong></div>
+            </div>
+          </div>
+
+          <div class="tag-cloud">
+            <span class="tag">NEW</span>
+            <span class="tag">PREMIUM</span>
+            <span class="tag">WARRANTY</span>
+          </div>
+        </aside>
+      } @placeholder {
+        <aside class="detail-panel placeholder">
+          <p>Loading details...</p>
+        </aside>
+      }
+    }
+  </main>
+</div>
