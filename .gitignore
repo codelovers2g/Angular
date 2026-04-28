@@ -1,0 +1,21 @@
+node_modules
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Angular build output and cache
+dist/
+.angular/
+
+# IDEs and Editors
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docuser
